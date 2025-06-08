@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Palettic</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#6100fe" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="images/1.png" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    
+    <style>
+        /* Custom styles for the color input and a smooth transition for theme change */
+        html { /* Apply transition to html for seamless theme change */
+            transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+        }
+
+        /* Styling for the custom color input */
+        #colorInput {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 80px; /* Adjust size as needed */
+            height: 40px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px; /* Rounded corners for the input */
+            overflow: hidden; /* Hide default border for better control */
+        }
+
+        #colorInput::-webkit-color-swatch {
+            border-radius: 8px;
+            border: none;
+        }
+
+        #colorInput::-moz-color-swatch {
+            border-radius: 8px;
+            border: none;
+        }
+
+        /* Custom message box for copy operations */
+        .copy-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .copy-message.show {
+            opacity: 1;
+        }
+
+        /* Styling for the loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Chat specific styles */
+        #chatMessages {
+            height: 250px; /* Fixed height for chat scroll area */
+            overflow-y: auto;
+            border: 1px solid #e2e8f0; /* gray-200 */
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .chat-message {
+            max-width: 80%;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .ai-message {
+            background-color: #e2e8f0; /* gray-200 */
+            color: #1a202c; /* gray-900 */
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        html.dark .ai-message {
+            background-color: #4a5568; /* gray-700 */
+            color: #e2e8f0; /* gray-200 */
+        }
+    </style>
+    <script>
+        // Configure Tailwind CSS to use 'class' for dark mode toggling
+        tailwind.config = {
+            darkMode: 'class', // This tells Tailwind to look for the 'dark' class on the HTML element
+        }
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 flex flex-col items-center justify-center min-h-screen p-4 md:p-6">
+
+    <div class="container max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 text-center transition-colors duration-300 relative">
+
+        <!-- New flex container for the title and toggle -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center gap-2 m-0">
+                🎨 Color Generator
+            </h1>
+
+            <!-- Dark Mode Toggle Switch (removed absolute positioning) -->
+            <label for="themeToggle" class="inline-flex items-center cursor-pointer text-2xl z-10">
+                <!-- Sun icon for light mode, Moon icon for dark mode -->
+                <span class="mr-2 inline-block dark:hidden leading-none">☀️</span>
+                <span class="mr-2 hidden dark:inline-block leading-none">🌙</span>
+                <div class="relative">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer">
+                    <div class="w-14 h-8 bg-gray-200 rounded-full peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </div>
+            </label>
+        </div>
+
+        <!-- Color Picker Section -->
+        <div class="picker flex items-center justify-center space-x-4 mb-8">
+            <label for="colorInput" class="text-xl font-semibold text-gray-700 dark:text-gray-300">Pick a Color:</label>
+            <input type="color" id="colorInput" value="#3498db" class="rounded-lg shadow-md cursor-pointer transition-transform transform hover:scale-105">
+        </div>
+
+        <!-- Color Values Display Section -->
+        <div class="color-values space-y-5 mb-8">
+            <div class="value-box flex items-center justify-between bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200 p-4 rounded-lg shadow-sm">
+                <span class="font-medium">HEX:</span>
+                <span id="hexValue" class="font-bold text-lg"></span>
+                <button onclick="copyText('hexValue')" class="copy-btn bg-blue-200 text-blue-700 hover:bg-blue-300 dark:bg-blue-700 dark:text-blue-100 dark:hover:bg-blue-600 p-2 rounded-md transition-colors duration-200 shadow-sm active:scale-95">
+                    📋
+                </button>
+            </div>
+            <div class="value-box flex items-center justify-between bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-200 p-4 rounded-lg shadow-sm">
+                <span class="font-medium">RGB:</span>
+                <span id="rgbValue" class="font-bold text-lg"></span>
+                <button onclick="copyText('rgbValue')" class="copy-btn bg-green-200 text-green-700 hover:bg-green-300 dark:bg-green-700 dark:text-green-100 dark:hover:bg-green-600 p-2 rounded-md transition-colors duration-200 shadow-sm active:scale-95">
+                    📋
+                </button>
+            </div>
+            <div class="value-box flex items-center justify-between bg-purple-50 text-purple-800 dark:bg-purple-900 dark:text-purple-200 p-4 rounded-lg shadow-sm">
+                <span class="font-medium">HSL:</span>
+                <span id="hslValue" class="font-bold text-lg"></span>
+                <button onclick="copyText('hslValue')" class="copy-btn bg-purple-200 text-purple-700 hover:bg-purple-300 dark:bg-purple-700 dark:text-purple-100 dark:hover:bg-purple-600 p-2 rounded-md transition-colors duration-200 shadow-sm active:scale-95">
+                    📋
+                </button>
+            </div>
+        </div>
+
+        <!-- New Feature: Generate Creative Color Name -->
+        <div class="color-name-generator mb-8 p-4 bg-purple-50 dark:bg-purple-900 rounded-lg shadow-inner">
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">✨ Generate Creative Color Name:</h3>
+            <button id="generateColorNameBtn" onclick="generateCreativeColorName()" class="inline-flex items-center justify-center px-6 py-3 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
+                ✨ Generate Name
+            </button>
+            <div id="generatedColorNameDisplay" class="text-gray-600 dark:text-gray-300 mt-3 min-h-[30px] flex items-center justify-center text-sm">
+                <p>Click "Generate Name" for the current color!</p>
+            </div>
+        </div>
+
+        <!-- New Feature: Generate Color from Mood -->
+        <div class="mood-picker mb-8 p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg shadow-inner">
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">✨ Generate Color from Mood:</h3>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <input type="text" id="moodPrompt" placeholder="e.g., 'calm forest', 'energetic summer'" class="w-full sm:w-auto flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-700 dark:text-gray-100">
+                <button id="generateColorFromMoodBtn" onclick="generateColorFromMood()" class="inline-flex items-center justify-center px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-75">
+                    ✨ Generate Color
+                </button>
+            </div>
+            <div id="generatedColorDescription" class="text-gray-600 dark:text-gray-300 mt-3 min-h-[30px] flex items-center justify-center text-sm">
+                <p>Type a mood and click "Generate Color"!</p>
+            </div>
+        </div>
+
+        <!-- New Feature: Suggest Theme Palette -->
+        <div class="theme-palette-generator mb-8 p-4 bg-green-50 dark:bg-green-900 rounded-lg shadow-inner">
+            <h3 class="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">✨ Suggest Theme Palette:</h3>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <input type="text" id="themeKeywords" placeholder="e.g., 'vintage, sci-fi, peaceful'" class="w-full sm:w-auto flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 dark:bg-gray-700 dark:text-gray-100">
+                <button id="suggestThemePaletteBtn" onclick="suggestThemePalette()" class="inline-flex items-center justify-center px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
+                    ✨ Generate Palette
+                </button>
+            </div>
+            <div id="suggestedPaletteDisplay" class="flex justify-center flex-wrap gap-2 mt-4 min-h-[50px] items-center">
+                <p class="text-gray-600 dark:text-gray-300 text-sm">Enter keywords and click "Generate Palette"!</p>
+            </div>
+        </div>
+
+
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-700 dark:text-gray-200 mb-6">Generated Palette</h2>
+        <div id="palette" class="palette flex justify-center flex-wrap gap-3 md:gap-4 mb-8">
+            <!-- Color swatches will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Gemini API Feature Button -->
+        <button id="describePaletteBtn" onclick="describePaletteMood()" class="inline-flex items-center justify-center px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 mb-4 mr-2">
+            ✨ Describe Palette Mood
+        </button>
+
+        <!-- Export Button -->
+        <button onclick="exportAsCSS()" class="inline-flex items-center px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 mb-4">
+            ⬇ Export as CSS
+        </button>
+
+        <!-- LLM Response Area for Palette Description -->
+        <div id="llmResponseArea" class="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner text-left">
+            <h3 class="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-200">AI Palette Description:</h3>
+            <div id="llmResponseContent" class="text-gray-600 dark:text-gray-300 min-h-[50px] flex items-center justify-center">
+                <p>Click "✨ Describe Palette Mood" to get an AI-generated description!</p>
+            </div>
+        </div>
+
+        <!-- Chatbot Feature -->
+        <div class="chatbot-container mt-8 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg shadow-inner">
+            <h3 class="text-xl font-semibold mb-3 text-blue-700 dark:text-blue-200">💬 Chat with AI:</h3>
+            <div id="chatMessages" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                <div class="ai-message">Hello! How can I assist you with colors or anything else today?</div>
+            </div>
+            <div class="chat-input-area flex mt-4 gap-2">
+                <input type="text" id="chatInput" placeholder="Ask me anything..." class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-100">
+                <button id="sendChatBtn" onclick="sendMessage()" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom message box element -->
+    <div id="copyMessage" class="copy-message"></div>
+
+    <script>
+        // Get references to HTML elements
+        const colorInput = document.getElementById("colorInput");
+        const hexValue = document.getElementById("hexValue");
+        const rgbValue = document.getElementById("rgbValue");
+        const hslValue = document.getElementById("hslValue");
+        const palette = document.getElementById("palette");
+        const themeToggle = document.getElementById("themeToggle");
+        const copyMessage = document.getElementById("copyMessage");
+        const llmResponseContent = document.getElementById("llmResponseContent");
+        const describePaletteBtn = document.getElementById("describePaletteBtn");
+        const moodPromptInput = document.getElementById("moodPrompt");
+        const generateColorFromMoodBtn = document.getElementById("generateColorFromMoodBtn");
+        const generatedColorDescription = document.getElementById("generatedColorDescription");
+        const themeKeywordsInput = document.getElementById("themeKeywords");
+        const suggestThemePaletteBtn = document.getElementById("suggestThemePaletteBtn");
+        const suggestedPaletteDisplay = document.getElementById("suggestedPaletteDisplay");
+        const chatMessages = document.getElementById("chatMessages");
+        const chatInput = document.getElementById("chatInput");
+        const sendChatBtn = document.getElementById("sendChatBtn");
+        const generateColorNameBtn = document.getElementById("generateColorNameBtn"); // New
+        const generatedColorNameDisplay = document.getElementById("generatedColorNameDisplay"); // New
+
+        // Chat history for conversational AI
+        let chatHistory = [];
+
+        // Event listener for color input changes
+        colorInput.addEventListener("input", updateColor);
+
+        // Event listener for theme toggle changes
+        themeToggle.addEventListener("change", () => {
+            document.documentElement.classList.toggle("dark", themeToggle.checked);
+            localStorage.setItem('theme', themeToggle.checked ? 'dark' : 'light');
+        });
+
+        // Event listener for chat input (Enter key)
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Function to update color values and generate palette
+        function updateColor() {
+            const hex = colorInput.value;
+            hexValue.textContent = hex; // Display HEX value
+
+            // Convert HEX to RGB
+            const rgb = hexToRGB(hex);
+            rgbValue.textContent = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`; // Display RGB value
+
+            // Convert RGB to HSL
+            const hsl = rgbToHSL(rgb.r, rgb.g, rgb.b);
+            hslValue.textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`; // Display HSL value
+
+            // Generate the color palette based on the HSL value
+            generatePalette(hsl);
+
+            // Clear previous LLM responses when color changes
+            llmResponseContent.innerHTML = '<p>Click "✨ Describe Palette Mood" to get an AI-generated description!</p>';
+            generatedColorDescription.innerHTML = '<p>Type a mood and click "Generate Color"!</p>';
+            suggestedPaletteDisplay.innerHTML = '<p class="text-gray-600 dark:text-gray-300 text-sm">Enter keywords and click "Generate Palette"!</p>';
+            generatedColorNameDisplay.innerHTML = '<p>Click "Generate Name" for the current color!</p>'; // Clear for new feature
+        }
+
+        // Function to copy text to clipboard and show a custom message
+        function copyText(id) {
+            const textToCopy = document.getElementById(id).textContent;
+            // Use document.execCommand('copy') for better compatibility in iframes
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // Show custom copy message
+            copyMessage.textContent = `Copied: ${textToCopy}`;
+            copyMessage.classList.add('show');
+            setTimeout(() => {
+                copyMessage.classList.remove('show');
+            }, 1500); // Message disappears after 1.5 seconds
+        }
+
+        // Helper function to convert HEX color to RGB
+        function hexToRGB(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            return {
+                r: (bigint >> 16) & 255,
+                g: (bigint >> 8) & 255,
+                b: bigint & 255,
+            };
+        }
+
+        // Helper function to convert RGB color to HSL
+        function rgbToHSL(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            let max = Math.max(r, g, b),
+                min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r:
+                        h = ((g - b) / d + (g < b ? 6 : 0));
+                        break;
+                    case g:
+                        h = ((b - r) / d + 2);
+                        break;
+                    case b:
+                        h = ((r - g) / d + 4);
+                        break;
+                }
+                h *= 60;
+            }
+            return {
+                h: Math.round(h),
+                s: Math.round(s * 100),
+                l: Math.round(l * 100),
+            };
+        }
+
+        // Function to generate and display the color palette
+        function generatePalette(hsl) {
+            palette.innerHTML = ""; // Clear previous palette
+            const paletteTypes = [
+                { name: "Original", h: hsl.h, s: hsl.s, l: hsl.l }, // Original color
+                { name: "Complementary", h: (hsl.h + 180) % 360, s: hsl.s, l: hsl.l }, // Opposite on the color wheel
+                { name: "Analogous +30°", h: (hsl.h + 30) % 360, s: hsl.s, l: hsl.l }, // 30 degrees clockwise
+                { name: "Analogous -30°", h: (hsl.h + 330) % 360, s: hsl.s, l: hsl.l }, // 30 degrees counter-clockwise
+                { name: "Triadic +120°", h: (hsl.h + 120) % 360, s: hsl.s, l: hsl.l }, // One of two colors forming a triad
+                { name: "Triadic -120°", h: (hsl.h + 240) % 360, s: hsl.s, l: hsl.l }, // The other color forming a triad
+                { name: "Split-Complement +150°", h: (hsl.h + 150) % 360, s: hsl.s, l: hsl.l }, // Split complementary (one side)
+                { name: "Split-Complement -150°", h: (hsl.h + 210) % 360, s: hsl.s, l: hsl.l }, // Split complementary (other side)
+                { name: "Light Tint", h: hsl.h, s: hsl.s, l: Math.min(100, hsl.l + 15) }, // Lighter version
+                { name: "Dark Shade", h: hsl.h, s: hsl.s, l: Math.max(0, hsl.l - 15) }, // Darker version
+            ];
+
+            // Create and append color swatches for each palette type
+            paletteTypes.forEach((p) => {
+                const div = document.createElement("div");
+                div.className = "swatch w-16 h-16 rounded-xl shadow-md border-2 border-gray-300 dark:border-gray-600 cursor-pointer transform hover:scale-105 transition-transform duration-200";
+                const colorString = `hsl(${p.h}, ${p.s}%, ${p.l}%)`;
+                div.title = `${p.name}: ${colorString}`; // Set tooltip
+                div.style.backgroundColor = colorString; // Set background color
+                div.setAttribute("data-color", colorString); // Store color value
+                div.onclick = () => copyTextFromSwatch(div.style.backgroundColor); // Copy color on click
+                palette.appendChild(div);
+            });
+        }
+
+        // Function to copy color from a swatch directly
+        function copyTextFromSwatch(color) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = color;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            copyMessage.textContent = `Copied: ${color}`;
+            copyMessage.classList.add('show');
+            setTimeout(() => {
+                copyMessage.classList.remove('show');
+            }, 1500);
+        }
+
+        // Function to export the current palette as CSS variables
+        function exportAsCSS() {
+            let css = ":root {\n";
+            document.querySelectorAll('.swatch').forEach((el, i) => {
+                css += `  --color-${i + 1}: ${el.style.backgroundColor};\n`; // CSS variable names
+            });
+            css += "}\n";
+
+            // Add dark mode variables under the .dark class
+            css += "\n.dark {\n"; // Apply styles when the 'dark' class is on the HTML element
+            document.querySelectorAll('.swatch').forEach((el, i) => {
+                const color = el.style.backgroundColor;
+                // Simple dark mode adjustment (e.g., lower lightness for HSL)
+                const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                if (hslMatch) {
+                    const h = parseInt(hslMatch[1]);
+                    const s = parseInt(hslMatch[2]);
+                    const l = Math.max(10, parseInt(hslMatch[3]) - 20); // Decrease lightness by 20, minimum 10
+                    css += `  --color-${i + 1}-dark: hsl(${h}, ${s}%, ${l}%);\n`;
+                } else {
+                    css += `  --color-${i + 1}-dark: ${color}; /* Fallback or complex conversion */\n`;
+                }
+            });
+            css += "}\n";
+
+            // Create a Blob and download the CSS file
+            const blob = new Blob([css], { type: 'text/css' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "color-palette.css"; // File name
+            link.click();
+            URL.revokeObjectURL(link.href); // Clean up the URL object
+        }
+
+        // --- Gemini API Integration for Palette Mood Description ---
+        async function describePaletteMood() {
+            llmResponseContent.innerHTML = '<div class="spinner mx-auto"></div><p class="mt-2">Generating description...</p>';
+            describePaletteBtn.disabled = true; // Disable button during generation
+
+            // Use the provided API key directly
+            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0";
+
+            if (!apiKey) {
+                llmResponseContent.innerHTML = '<p class="text-red-500">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
+                describePaletteBtn.disabled = false;
+                return;
+            }
+
+
+            const paletteColors = Array.from(document.querySelectorAll('.swatch')).map(swatch => swatch.style.backgroundColor);
+            const prompt = `Describe the overall mood, feeling, and potential use cases for a design project using the following color palette:\n\n${paletteColors.join(', ')}\n\nProvide a concise and creative paragraph.`;
+
+            // Reset chat history for this specific API call if it's not a conversational context
+            let chatHistoryForDescription = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistoryForDescription };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    llmResponseContent.innerHTML = `<p>${text}</p>`;
+                } else {
+                    llmResponseContent.innerHTML = '<p class="text-red-500">Error: Could not get a description. API response structure unexpected.</p>';
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                llmResponseContent.innerHTML = `<p class="text-red-500">Error: Failed to connect to Gemini API. Check your API key, network connection, or browser console for CORS issues. Detail: ${error.message}</p>`;
+                console.error('Error calling Gemini API:', error);
+            } finally {
+                describePaletteBtn.disabled = false; // Re-enable button
+            }
+        }
+
+        // --- Gemini API Integration for Generating Color from Mood ---
+        async function generateColorFromMood() {
+            const mood = moodPromptInput.value.trim();
+            if (!mood) {
+                generatedColorDescription.innerHTML = '<p class="text-red-500">Please enter a mood or theme!</p>';
+                return;
+            }
+
+            generatedColorDescription.innerHTML = '<div class="spinner mx-auto"></div><p class="mt-2">Generating color...</p>';
+            generateColorFromMoodBtn.disabled = true; // Disable button during generation
+
+            // Use the provided API key directly
+            const apiKey = "AIzaSyBLDAO5z4lYw-mEYDcxzhaish8TLhA7aMk"; // Use the API key provided by the user
+
+            if (!apiKey) {
+                generatedColorDescription.innerHTML = '<p class="text-red-500">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
+                generateColorFromMoodBtn.disabled = false;
+                return;
+            }
+
+
+            const prompt = `Based on the mood "${mood}", suggest a primary color. Provide the color in hexadecimal format (e.g., #RRGGBB). Your response MUST be a JSON object with a single key "hexColor" and its value as the hexadecimal color string.`;
+
+            // Reset chat history for this specific API call
+            let chatHistoryForMood = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistoryForMood,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "hexColor": { "type": "STRING", "description": "The suggested color in hexadecimal format (e.g., #RRGGBB)", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" }
+                        },
+                        "required": ["hexColor"]
+                    }
+                }
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonString);
+
+                    if (parsedJson.hexColor && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(parsedJson.hexColor)) {
+                        colorInput.value = parsedJson.hexColor; // Update the color picker
+                        updateColor(); // Trigger update for palette and values
+                        generatedColorDescription.innerHTML = `<p>Suggested color for "${mood}": <span class="font-bold">${parsedJson.hexColor}</span></p>`;
+                    } else {
+                        generatedColorDescription.innerHTML = '<p class="text-red-500">Error: AI did not return a valid hex color. Please try again.</p>';
+                        console.error('Gemini API response did not contain a valid hexColor:', parsedJson);
+                    }
+                } else {
+                    generatedColorDescription.innerHTML = '<p class="text-red-500">Error: Could not generate a color. API response structure unexpected.</p>';
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                generatedColorDescription.innerHTML = `<p class="text-red-500">Error: Failed to connect to Gemini API. Check your API key, network connection, or browser console for CORS issues. Detail: ${error.message}</p>`;
+                console.error('Error calling Gemini API for color generation:', error);
+            } finally {
+                generateColorFromMoodBtn.disabled = false; // Re-enable button
+            }
+        }
+
+        // --- Gemini API Integration for Suggesting Theme Palette ---
+        async function suggestThemePalette() {
+            const keywords = themeKeywordsInput.value.trim();
+            if (!keywords) {
+                suggestedPaletteDisplay.innerHTML = '<p class="text-red-500 text-sm">Please enter theme keywords!</p>';
+                return;
+            }
+
+            suggestedPaletteDisplay.innerHTML = '<div class="spinner mx-auto my-2"></div><p class="mt-2 text-sm">Generating theme palette...</p>';
+            suggestThemePaletteBtn.disabled = true; // Disable button during generation
+
+            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+
+            if (!apiKey) {
+                suggestedPaletteDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
+                suggestThemePaletteBtn.disabled = false;
+                return;
+            }
+
+            const prompt = `Generate a 5-color hexadecimal color palette for a design theme based on these keywords: "${keywords}". Provide the output as a JSON array of hexadecimal color strings, e.g., ["#RRGGBB", "#RRGGBB", "#RRGGBB", "#RRGGBB", "#RRGGBB"].`;
+
+            // Reset chat history for this specific API call
+            let chatHistoryForTheme = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistoryForTheme,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "STRING",
+                            "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                        },
+                        minItems: 5,
+                        maxItems: 5
+                    }
+                }
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonString);
+
+                    if (Array.isArray(parsedJson) && parsedJson.length === 5 && parsedJson.every(color => typeof color === 'string' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color))) {
+                        suggestedPaletteDisplay.innerHTML = ''; // Clear previous content
+                        parsedJson.forEach(color => {
+                            const swatch = document.createElement("div");
+                            swatch.className = "swatch w-12 h-12 rounded-lg shadow-md border-2 border-gray-300 dark:border-gray-600 cursor-pointer transform hover:scale-110 transition-transform duration-200";
+                            swatch.style.backgroundColor = color;
+                            swatch.title = color;
+                            swatch.onclick = () => {
+                                colorInput.value = color;
+                                updateColor();
+                                copyTextFromSwatch(color); // Also copy to clipboard for convenience
+                            };
+                            suggestedPaletteDisplay.appendChild(swatch);
+                        });
+                    } else {
+                        suggestedPaletteDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: AI did not return a valid 5-color hex array. Please try again.</p>';
+                        console.error('Gemini API response did not contain a valid 5-color hex array:', parsedJson);
+                    }
+                } else {
+                    suggestedPaletteDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: Could not generate theme palette. API response structure unexpected.</p>';
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                suggestedPaletteDisplay.innerHTML = `<p class="text-red-500 text-sm">Error: Failed to connect or parse response. Detail: ${error.message}</p>`;
+                console.error('Error calling Gemini API for theme palette generation:', error);
+            } finally {
+                suggestThemePaletteBtn.disabled = false; // Re-enable button
+            }
+        }
+
+        // --- Gemini API Integration for Generating Creative Color Name ---
+        async function generateCreativeColorName() {
+            const currentColor = hexValue.textContent; // Get the current HEX color
+            if (!currentColor) {
+                generatedColorNameDisplay.innerHTML = '<p class="text-red-500 text-sm">No color selected to name!</p>';
+                return;
+            }
+
+            generatedColorNameDisplay.innerHTML = '<div class="spinner mx-auto my-2"></div><p class="mt-2 text-sm">Generating name...</p>';
+            generateColorNameBtn.disabled = true; // Disable button during generation
+
+            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+
+            if (!apiKey) {
+                generatedColorNameDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: API Key is missing. Please provide it.</p>';
+                generateColorNameBtn.disabled = false;
+                return;
+            }
+
+            const prompt = `Generate a very creative, evocative, and unique name for the hexadecimal color "${currentColor}". The name should be short and memorable, suitable for a design palette. Provide the name in a JSON object with a single key "colorName".`;
+
+            let chatHistoryForName = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistoryForName,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "colorName": { "type": "STRING", "description": "A creative name for the color" }
+                        },
+                        "required": ["colorName"]
+                    }
+                }
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonString);
+
+                    if (parsedJson.colorName) {
+                        generatedColorNameDisplay.innerHTML = `<p>Name: <span class="font-bold text-base">${parsedJson.colorName}</span></p>`;
+                    } else {
+                        generatedColorNameDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: AI did not return a valid color name. Please try again.</p>';
+                        console.error('Gemini API response did not contain a valid colorName:', parsedJson);
+                    }
+                } else {
+                    generatedColorNameDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: Could not generate color name. API response structure unexpected.</p>';
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                generatedColorNameDisplay.innerHTML = `<p class="text-red-500 text-sm">Error: Failed to connect or parse response. Detail: ${error.message}</p>`;
+                console.error('Error calling Gemini API for color name generation:', error);
+            } finally {
+                generateColorNameBtn.disabled = false; // Re-enable button
+            }
+        }
+        // --- End Gemini API Integration ---
+
+        // --- Chatbot Logic ---
+        async function sendMessage() {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            // Add user message to display and history
+            appendMessage(userMessage, 'user');
+            chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+
+            chatInput.value = ''; // Clear input
+            sendChatBtn.disabled = true; // Disable send button
+            
+            // Add a loading indicator message
+            const loadingMessageDiv = document.createElement('div');
+            loadingMessageDiv.className = 'ai-message flex items-center gap-2';
+            loadingMessageDiv.innerHTML = '<div class="spinner"></div><span>AI is thinking...</span>';
+            chatMessages.appendChild(loadingMessageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+
+            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+
+            if (!apiKey) {
+                chatMessages.removeChild(loadingMessageDiv); // Remove spinner
+                appendMessage('Error: Chatbot API Key is missing. Please provide it.', 'ai');
+                sendChatBtn.disabled = false;
+                return;
+            }
+
+            const payload = { contents: chatHistory };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                chatMessages.removeChild(loadingMessageDiv); // Remove spinner
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const aiText = result.candidates[0].content.parts[0].text;
+                    appendMessage(aiText, 'ai');
+                    chatHistory.push({ role: "model", parts: [{ text: aiText }] }); // Add AI response to history
+                } else {
+                    appendMessage('AI did not respond. Please try again.', 'ai');
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                chatMessages.removeChild(loadingMessageDiv); // Remove spinner
+                appendMessage(`Error: Could not connect to chatbot. Detail: ${error.message}`, 'ai');
+                console.error('Error calling Gemini Chat API:', error);
+            } finally {
+                sendChatBtn.disabled = false; // Re-enable button
+                chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to latest message
+        }
+
+        // --- End Chatbot Logic ---
+
+        // Initialize with default color and check for saved theme preference
+        window.onload = function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                themeToggle.checked = true;
+                document.documentElement.classList.add('dark'); // Apply to html element
+            } else {
+                themeToggle.checked = false;
+                document.documentElement.classList.remove('dark'); // Remove from html element
+            }
+            updateColor(); // Initialize color display and palette
+        };
+
+
+            if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => {
+            console.log('Service Worker registered:', reg.scope);
+            })
+            .catch(err => {
+            console.log('Service Worker registration failed:', err);
+            });
+        });
+        }   
+
+
+    </script>
+</body>
+</html>
