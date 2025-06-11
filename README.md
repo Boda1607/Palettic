@@ -57,7 +57,8 @@
 ### 1. Clone the Repository (if applicable)
 
 ```bash
-git clone <repository-url>
+  git clone https://github.com/Boda1607/Palettic.git
+  
 cd palettic
 ```
 ## 🚀 2. Obtain Gemini API Key
