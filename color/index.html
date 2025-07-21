@@ -467,7 +467,7 @@
             describePaletteBtn.disabled = true; // Disable button during generation
 
             // Use the provided API key directly
-            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0";
+            const apiKey = "YOUR_ACCESS_KEY_HERE";
 
             if (!apiKey) {
                 llmResponseContent.innerHTML = '<p class="text-red-500">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
@@ -527,7 +527,7 @@
             generateColorFromMoodBtn.disabled = true; // Disable button during generation
 
             // Use the provided API key directly
-            const apiKey = "AIzaSyBLDAO5z4lYw-mEYDcxzhaish8TLhA7aMk"; // Use the API key provided by the user
+            const apiKey = "YOUR_ACCESS_KEY_HERE"; // Use the API key provided by the user
 
             if (!apiKey) {
                 generatedColorDescription.innerHTML = '<p class="text-red-500">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
@@ -606,7 +606,7 @@
             suggestedPaletteDisplay.innerHTML = '<div class="spinner mx-auto my-2"></div><p class="mt-2 text-sm">Generating theme palette...</p>';
             suggestThemePaletteBtn.disabled = true; // Disable button during generation
 
-            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+            const apiKey = "YOUR_ACCESS_KEY_HERE"; // Use the API key provided by the user
 
             if (!apiKey) {
                 suggestedPaletteDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: API Key is missing. Please get a Gemini API key from Google AI Studio and insert it into the script for local testing.</p>';
@@ -696,7 +696,7 @@
             generatedColorNameDisplay.innerHTML = '<div class="spinner mx-auto my-2"></div><p class="mt-2 text-sm">Generating name...</p>';
             generateColorNameBtn.disabled = true; // Disable button during generation
 
-            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+            const apiKey = "YOUR_ACCESS_KEY_HERE"; // Use the API key provided by the user
 
             if (!apiKey) {
                 generatedColorNameDisplay.innerHTML = '<p class="text-red-500 text-sm">Error: API Key is missing. Please provide it.</p>';
@@ -780,7 +780,7 @@
             chatMessages.appendChild(loadingMessageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
 
-            const apiKey = "AIzaSyAK95o21-ywBXodMokpZtDx6XnV6DRAZb0"; // Use the API key provided by the user
+            const apiKey = "YOUR_ACCESS_KEY_HERE"; // Use the API key provided by the user
 
             if (!apiKey) {
                 chatMessages.removeChild(loadingMessageDiv); // Remove spinner
